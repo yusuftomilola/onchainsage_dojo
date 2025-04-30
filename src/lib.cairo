@@ -1,11 +1,14 @@
-pub mod systems {
-    pub mod actions;
+mod models {
+    pub mod auth;
 }
 
-pub mod models;
+mod systems {
+    pub mod auth;
+}
 
-pub mod tests {
-    mod test_world;
+#[cfg(test)]
+mod tests {
+    mod auth_test;
 }
 
 
