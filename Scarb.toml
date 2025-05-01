@@ -1,21 +1,22 @@
 [package]
-cairo-version = "=2.9.4"
 name = "onchainsage_dojo"
 version = "1.4.0"
+cairo-version = "2.9.4"
 edition = "2024_07"
 
-[cairo]
-sierra-replace-ids = true
-
-[scripts]
-migrate = "sozo build && sozo migrate"                           # scarb run migrate
-
 [dependencies]
-dojo = { git = "https://github.com/dojoengine/dojo", tag = "v1.4.0" }
+dojo = { git = "https://github.com/dojoengine/dojo" }
+starknet = "2.9.4"
 
 [[target.starknet-contract]]
-build-external-contracts = ["dojo::world::world_contract::world"]
+sierra = true
+casm = true
+sierra-replace-ids = true
 
-[dev-dependencies]
-cairo_test = "=2.9.4"
-dojo_cairo_test = { git = "https://github.com/dojoengine/dojo", tag = "v1.4.0" }
+[tool.dojo]
+initializer_class_hash = "0x0"
+
+[tool.dojo.env]
+rpc_url = "http://localhost:5050"
+account_address = "0x0"
+private_key = "0x0"
