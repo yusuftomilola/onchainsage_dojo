@@ -1,11 +1,11 @@
 use starknet::ContractAddress;
 
-#[derive(Copy, Drop, Serde)]
+#[derive(Copy, Drop, Serde, Debug)]
 #[dojo::model]
-struct Auth {
+pub struct Auth {
     #[key]
-    player: ContractAddress,
-    is_active: bool,
-    created_at: u64,  // Timestamp of registration
-    last_login: u64,  // Timestamp of last login
+    pub address: ContractAddress,
+    pub is_admin: bool,
+    pub is_validator: bool,
+    pub roles_timestamp: u64,
 }
