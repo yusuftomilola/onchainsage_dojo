@@ -1,21 +1,9 @@
-mod models {
-    pub mod auth;
-    pub mod signal;
-}
-
-mod systems {
-    pub mod auth;
-    pub mod signal;
-}
-
-mod events {
-    pub mod auth;
-    pub mod signal;
-}
+pub mod models;
+pub mod systems;
+pub mod constants;
 
 #[cfg(test)]
 mod tests {
-    mod auth_test;
     mod test_signal;
 }
 
