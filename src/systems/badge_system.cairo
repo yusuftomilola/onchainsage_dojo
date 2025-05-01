@@ -1,6 +1,6 @@
 #[dojo::contract]
 mod badge_system {
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
     use onchainsage_dojo::models::user::User;
 
@@ -59,6 +59,38 @@ mod badge_system {
 
             // Update the user data in the world state
             self.world_dispatcher.read().set_user(user_data);
+        }
+
+        /// Checks if a user can submit a trading call
+        fn can_submit_call(ref self: ContractState, user: ContractAddress) -> bool {
+            // Fetch user data from the world state
+            let user_data = self.world_dispatcher.read().get_user(user);
+
+            // Check if the user has any badges
+            if user_data.badges.len() > 0 {
+                // User has a badge, allow full privileges
+                return true;
+            }
+
+            // User does not have a badge, enforce call limit
+            let current_timestamp = get_block_timestamp();
+            let month_start = current_timestamp - (current_timestamp % 2592000); // Start of the current month (30 days in seconds)
+
+            // Check if the user has exceeded the call limit for the current month
+            if user_data.call_count < 5 {
+                // Increment the call count
+                let mut updated_user_data = user_data;
+                updated_user_data.call_count += 1;
+
+                // Update the user data in the world state
+                self.world_dispatcher.read().set_user(updated_user_data);
+
+                // Allow the call
+                return true;
+            }
+
+            // Deny the call if the limit is exceeded
+            return false;
         }
     }
 }
