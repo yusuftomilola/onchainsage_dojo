@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use dojo_examples::models::signal_lifecycle::SignalStatus;
 
 #[derive(Drop, Serde, starknet::Event)]
 struct SignalGenerated {
@@ -17,5 +18,14 @@ struct SignalValidated {
     signal_id: u256,
     #[key]
     validator: ContractAddress,
+    timestamp: u64
+}
+
+#[derive(Drop, Serde, starknet::Event)]
+struct SignalStatusChanged {
+    #[key]
+    signal_id: u256,
+    old_status: SignalStatus,
+    new_status: SignalStatus,
     timestamp: u64
 }
