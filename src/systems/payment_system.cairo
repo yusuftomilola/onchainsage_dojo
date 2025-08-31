@@ -148,4 +148,63 @@ mod payment_system {
         fn pay_for_call(ref world: IWorldDispatcher, user: ContractAddress, amount: u256) {
             let mut payment_data = get!(world, user, (PaymentData));
             assert(!payment_data.user.is_zero(), 'User not found');
+
+       
+            let call_fee = self._calculate_call_fee(world, payment_data.tier, amount);
             
+            if payment_data.balance < call_fee {
+                // Log insufficient balance event
+                let event_id = self._get_next_event_id(world);
+                let payment_event = PaymentEvent {
+                    id: event_id,
+                    user,
+                    event_type: PaymentEventType::InsufficientBalance,
+                    amount: call_fee,
+                    timestamp: get_block_timestamp(),
+                    block_number: get_block_number(),
+                };
+                set!(world, (payment_event));
+                
+                emit!(world, InsufficientBalance {
+                    user,
+                    required: call_fee,
+                    available: payment_data.balance,
+                    timestamp: get_block_timestamp(),
+                });
+                
+                panic!("Insufficient balance for call fee");
+            }
+            
+            payment_data.balance -= call_fee;
+            payment_data.total_spent += call_fee;
+            payment_data.last_payment_timestamp = get_block_timestamp();
+            
+            // Check if tier should be downgraded due to low balance
+            let eligible_tier = self._calculate_eligible_tier(world, payment_data.balance);
+            if eligible_tier != payment_data.tier {
+                payment_data.tier = eligible_tier;
+            }
+            
+            set!(world, (payment_data));
+            
+            // Log event for Torii
+            let event_id = self._get_next_event_id(world);
+            let payment_event = PaymentEvent {
+                id: event_id,
+                user,
+                event_type: PaymentEventType::CallPayment,
+                amount: call_fee,
+                timestamp: get_block_timestamp(),
+                block_number: get_block_number(),
+            };
+            set!(world, (payment_event));
+            
+            // Emit event
+            emit!(world, CallPaymentMade {
+                user,
+                amount: call_fee,
+                remaining_balance: payment_data.balance,
+                timestamp: get_block_timestamp(),
+            });
+        }
+     
