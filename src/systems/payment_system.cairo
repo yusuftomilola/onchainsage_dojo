@@ -208,3 +208,48 @@ mod payment_system {
             });
         }
      
+     
+        fn initialize_config(ref world: IWorldDispatcher) {
+            // Set tier requirements
+            let basic_req = TierRequirements {
+                tier: UserTier::Basic,
+                minimum_balance: 0,
+                call_fee_discount: 0,
+            };
+            
+            let premium_req = TierRequirements {
+                tier: UserTier::Premium,
+                minimum_balance: 1000000000000000000, // 1 STRK
+                call_fee_discount: 20,
+            };
+            
+            let vip_req = TierRequirements {
+                tier: UserTier::VIP,
+                minimum_balance: 10000000000000000000, // 10 STRK
+                call_fee_discount: 50,
+            };
+            
+            set!(world, (basic_req, premium_req, vip_req));
+            
+            // Set call fee configuration
+            let fee_config = CallFeeConfig {
+                id: 1,
+                base_fee: 100000000000000000, // 0.1 STRK
+                premium_discount: 20,
+                vip_discount: 50,
+            };
+            
+            set!(world, (fee_config));
+        }
+
+        fn get_user_payment_data(world: @IWorldDispatcher, user: ContractAddress) -> PaymentData {
+            get!(world, user, (PaymentData))
+        }
+
+        fn get_call_fee(world: @IWorldDispatcher, user: ContractAddress) -> u256 {
+            let payment_data = get!(world, user, (PaymentData));
+            let fee_config = get!(world, 1_u8, (CallFeeConfig));
+            
+            self._calculate_call_fee(world, payment_data.tier, fee_config.base_fee)
+        }
+    }
