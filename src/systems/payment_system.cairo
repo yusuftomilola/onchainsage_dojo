@@ -253,3 +253,43 @@ mod payment_system {
             self._calculate_call_fee(world, payment_data.tier, fee_config.base_fee)
         }
     }
+
+    
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn _calculate_eligible_tier(self: @ContractState, world: IWorldDispatcher, balance: u256) -> UserTier {
+            let vip_req = get!(world, UserTier::VIP, (TierRequirements));
+            let premium_req = get!(world, UserTier::Premium, (TierRequirements));
+            
+            if balance >= vip_req.minimum_balance {
+                UserTier::VIP
+            } else if balance >= premium_req.minimum_balance {
+                UserTier::Premium
+            } else {
+                UserTier::Basic
+            }
+        }
+
+        fn _calculate_call_fee(self: @ContractState, world: IWorldDispatcher, tier: UserTier, base_amount: u256) -> u256 {
+            let fee_config = get!(world, 1_u8, (CallFeeConfig));
+            let tier_req = get!(world, tier, (TierRequirements));
+            
+            let discount_percent = tier_req.call_fee_discount;
+            let discount_amount = (base_amount * discount_percent.into()) / 100;
+            
+            base_amount - discount_amount
+        }
+
+        fn _get_next_event_id(self: @ContractState, world: IWorldDispatcher) -> u32 {
+            // Simple counter implementation - in production, use a more robust approach
+            let mut counter = 1_u32;
+            loop {
+                let event = get!(world, counter, (PaymentEvent));
+                if event.id == 0 {
+                    break counter;
+                }
+                counter += 1;
+            }
+        }
+    }
+}
