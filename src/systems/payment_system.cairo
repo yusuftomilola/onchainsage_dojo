@@ -99,3 +99,53 @@ mod payment_system {
             };
             set!(world, (payment_event));
             
+
+            // Emit event
+            emit!(world, DepositMade {
+                user,
+                amount,
+                new_balance: payment_data.balance,
+                timestamp: get_block_timestamp(),
+            });
+        }
+
+        fn upgrade_tier(ref world: IWorldDispatcher, user: ContractAddress) {
+            let mut payment_data = get!(world, user, (PaymentData));
+            assert(!payment_data.user.is_zero(), 'User not found');
+            
+            let current_tier = payment_data.tier;
+            let new_tier = self._calculate_eligible_tier(world, payment_data.balance);
+            
+            assert(new_tier != current_tier, 'Already at highest eligible tier');
+            
+            let old_tier = payment_data.tier;
+            payment_data.tier = new_tier;
+            payment_data.last_payment_timestamp = get_block_timestamp();
+            
+            set!(world, (payment_data));
+            
+            // Log event for Torii
+            let event_id = self._get_next_event_id(world);
+            let payment_event = PaymentEvent {
+                id: event_id,
+                user,
+                event_type: PaymentEventType::TierUpgrade,
+                amount: 0,
+                timestamp: get_block_timestamp(),
+                block_number: get_block_number(),
+            };
+            set!(world, (payment_event));
+            
+            // Emit event
+            emit!(world, TierUpgraded {
+                user,
+                old_tier,
+                new_tier,
+                timestamp: get_block_timestamp(),
+            });
+        }
+
+        fn pay_for_call(ref world: IWorldDispatcher, user: ContractAddress, amount: u256) {
+            let mut payment_data = get!(world, user, (PaymentData));
+            assert(!payment_data.user.is_zero(), 'User not found');
+            
